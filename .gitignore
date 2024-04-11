@@ -1,0 +1,27 @@
+# Ignore node_modules directory
+/frontend/node_modules/
+
+# Ignore build output
+/frontend/build/
+/frontend/dist/
+
+# Ignore .env files
+/frontend/.env
+/backend/.env
+
+# Ignore Python virtual environment
+/backend/venv/
+/backend/package/
+
+# Ignore compiled Python files
+/backend/__pycache__/
+
+# Ignore log files
+/backend/logs/
+
+# Ignore database files
+/backend/db.sqlite3
+
+# Ignore any other generated files and folders
+/frontend/.DS_Store
+/backend/.DS_Store
