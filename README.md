@@ -11,6 +11,6 @@ To enhance user accessibility, ExpenseIQ has been meticulously developed with re
 
 ## Application Flow
 
-When a user submits a request to the ExpenseIQ API, the request is forwarded to OpenAI's GPT-3.5 Turbo to extract relevant information and format it into a specified JSON structure. If the request involves any foreign currency, a call is made to the ExchangeRate API to convert the currency into Singapore Dollars (SGD). These processed values are then stored in DynamoDB for future reference.\
+When a user submits a request to the ExpenseIQ API, the request is forwarded to OpenAI's GPT-3.5 Turbo to extract relevant information and format it into a specified JSON structure. If the request involves any foreign currency, a call is made to the ExchangeRate API to convert the currency into Singapore Dollars (SGD). These processed values are then stored in DynamoDB for future reference.
 
 To optimise computational costs, all calculations and data processing occur on the user’s client device rather than on our cloud infrastructure. The primary role of our AWS Lambda function is to ensure correctness and reliable data storage and retrieval from DynamoDB. This architecture not only enhances performance but also ensures user data is processed locally, maximising privacy and efficiency.
