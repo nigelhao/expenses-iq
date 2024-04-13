@@ -18,10 +18,6 @@ ExpenseIQ not only logs each transaction but also analyses spending patterns to 
 
 To enhance user accessibility, ExpenseIQ has been meticulously developed with responsive web design, ensuring a seamless and user-friendly experience across all devices, particularly mobile. Additionally, the application is crafted as a Progressive Web App (PWA), allowing mobile users the convenience of accessing ExpenseIQ directly through an app icon, bypassing the need for a web browser. This approach not only streamlines user interaction but also significantly improves accessibility and engagement.
 
-**Github Repository:** <https://github.com/nigelhao/expenses-iq>
-
-**Web Application:** <https://expenseiq.astary.one/>
-
 ---
 
 ## Technology & Architecture
@@ -60,44 +56,6 @@ To optimise computational costs, all calculations and data processing occur on t
 ![Figure 1: ExpenseIQ cloud architecture](attachments/f71829e3-3dbe-45e1-bf91-e6f14873834d.png)
 
 Serverless architecture is the optimal choice for ExpenseIQ, given the application's relatively small scale. This architecture enables a focus on developing the application without the need to manage infrastructure-related issues such as resource scaling and redundancy. These aspects are efficiently handled by AWS, allowing for seamless operation. In contrast to the continuous operation and associated costs of using virtual machines (VMs) that need to run 24/7 in the cloud, serverless services incur costs only when requests are made. This results in minimal running costs for the application, often close to zero, making it a cost-effective solution for maintaining and scaling the service.
-
----
-
-## Demonstration
-
-### Sign Up & Sign In
-
-![Figure 2: ExpenseIQ registration](attachments/3604de37-1688-4ce3-b6b2-73a2290f94bb.png " =493x410") ![Figure 3: ExpenseIQ registration success prompt](attachments/af029581-60a4-4e53-a9a6-5612936120f0.png " =493x410")
-
-![Figure 4: ExpenseIQ login page](attachments/f5b1c083-5153-45cb-8e4c-5f00191922d0.png " =896x745")
-
-When users create an account with ExpenseIQ, their registration details are securely stored in our database. Passwords are protected using the SHA-256 hashing algorithm to ensure enhanced security. Immediately following registration, users have the capability to log in to ExpenseIQ. After successful login, a session token is generated and stored in the browser's cookies. This token enables ExpenseIQ to maintain the user's login status for subsequent sessions. Additionally, all critical data associated with this session and the user is securely stored in the backend database.
-
----
-
-### Dashboard - ExpenseIQ in Action
-
-![Figure 5: ExpenseIQ dashboard](attachments/b37d7f52-578b-428e-927b-587b5055b1ef.png " =896x745")
-
-Users will be greeted by a clean and intuitive dashboard featuring a single text box where they can describe their expenditures. For instance, as depicted in Figure 5, a user might enter "Ate chicken rice for $3." Upon submitting this information, a new transaction is automatically generated, capturing the correct description, category, and amount, as illustrated in Figure 6.
-
----
-
-![Figure 6: ExpenseIQ dashboard](attachments/e7ea381a-0642-4291-a5b1-df3b7bc331b1.png " =896x745")
-
-As illustrated in Figure 6, the system adeptly handles complex input. For example, when a user inputs "Bought AirPods Pro for \$270 and paid $400 for hospital bills," the system efficiently processes this information. Upon confirmation, it distinctively creates two separate transactions. Each transaction is meticulously recorded with its respective description, category, and amount, as detailed in Figure 7.
-
----
-
-![Figure 7: ExpenseIQ dashboard](attachments/91d798f5-dbda-4815-888a-12e50c5128e7.png " =896x745")
-
-A particularly engaging example of system functionality is presented in Figure 7, where a user enters, "Bought fruits, noodles, kimchi, and snacks from eMart, all for 20,000 KRW." In response, the system not only generates a new transaction but also intelligently summarizes the description to "eMart Grocery Shopping." Additionally, it automatically converts the total amount from KRW to SGD using the live foreign exchange rate.
-
----
-
-![Figure 8: ExpenseIQ dashboard](attachments/1674ba7d-1ff9-4e0d-a942-3c79267e9800.png " =896x805")
-
-Once all transactions are recorded, the system automatically calculates key statistics to aid users in analysing their spending patterns. These include current month expenses, total expenses, and average daily expenditures. Additionally, for a more visual representation of spending behaviour, a bar chart displaying a six-month spending trend is generated. This graphical insight allows users to easily track and assess their financial habits over time, providing a clear overview of spending fluctuations across different months.
 
 ---
 
