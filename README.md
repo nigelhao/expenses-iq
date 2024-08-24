@@ -87,3 +87,5 @@ In conclusion, ExpenseIQ emerges as a transformative tool in the realm of person
 The underlying technology stack, comprising ReactJS, AWS services, and serverless architecture, ensures that ExpenseIQ is not only robust and scalable but also cost-effective and efficient. The application's design as a Progressive Web App enhances accessibility, making it as convenient as native applications with the added benefits of web-based flexibility.
 
 Looking ahead, the potential for enhancements such as transaction editing and advanced reporting features promises to make ExpenseIQ even more indispensable to its users. By continuously evolving and adapting to user needs, ExpenseIQ is well-positioned to set a new standard in the financial tech landscape, helping users navigate their financial journeys with greater ease and insight. As it stands, ExpenseIQ represents a significant step forward in making personal finance management both accessible and engaging.
+
+Demo: https://expenseiq.astary.one/
