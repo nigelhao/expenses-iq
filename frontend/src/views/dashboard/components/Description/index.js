@@ -14,29 +14,28 @@ const Description = (props) => {
   const [description, setDescription] = useState("");
   const [isUpdate, setUpdate] = useState(false);
 
-  const showAlert = () => Swal.fire("Good job!", "Transaction recorded", "success");
-  const showError = () => Swal.fire("Error", "Something went wrong", "error");
+  const showError = () => Swal.fire("Error", "Cannot understand what you saying", "error");
 
   const handleSubmit = async () => {
     setUpdate(true);
     try {
-      const response = await axios.post(
-        data.apiRootUrl + "transactions",
-        {
+      const response = await axios({
+        method: "post",
+        url: `${data.apiRootUrl}transactions`,
+        data: {
           description: description,
         },
-        {
-          withCredentials: true,
-        }
-      );
+        withCredentials: true,
+      });
+
+      console.log(response);
       setUpdate(false);
-      showAlert();
       setDescription("");
       props.setRefresh(props.refresh + 1);
     } catch (error) {
       setUpdate(false);
-      showError();
       console.log(error);
+      showError();
     }
   };
 
@@ -84,7 +83,7 @@ const Description = (props) => {
       <SoftBox pb={2} px={2} display="flex" flexDirection={{ xs: "column", sm: "row" }} mt="auto">
         <SoftBox width={{ xs: "100%", sm: "60%" }} lineHeight={1}>
           <SoftTypography variant="button" color="text" fontWeight="regular">
-            Describe your expenses and we will process it for you
+            Describe your expenses and we will process it
           </SoftTypography>
         </SoftBox>
         <SoftBox width={{ xs: "100%", sm: "40%" }} textAlign="right" mt={{ xs: 2, sm: "auto" }}>

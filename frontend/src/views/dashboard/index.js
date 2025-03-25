@@ -26,6 +26,7 @@ const Home = () => {
       { Header: "description", accessor: "description", width: "30%" },
       { Header: "category", accessor: "category", width: "30%" },
       { Header: "amount (SGD)", accessor: "amount" },
+      { Header: "action", accessor: "id" },
     ],
     rows: [],
   });
@@ -68,6 +69,7 @@ const Home = () => {
               ? `(${parseFloat(t.original_amount).toFixed(2)} ${t.original_currency})`
               : ""
           }`,
+          id: t.SK,
         }));
 
         newTransactions.sort((a, b) => b.full_date - a.full_date);
@@ -165,7 +167,13 @@ const Home = () => {
         </Grid>
       </SoftBox>
       <SoftBox mb={3}>
-        <DataTable table={tableData} isSorted={false} isUpdate={isUpdate} />
+        <DataTable
+          table={tableData}
+          isSorted={false}
+          isUpdate={isUpdate}
+          refresh={refresh}
+          setRefresh={setRefresh}
+        />
       </SoftBox>
     </DashboardLayout>
   );

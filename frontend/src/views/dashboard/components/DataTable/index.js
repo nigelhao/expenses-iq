@@ -14,6 +14,8 @@ import SoftPagination from "components/SoftPagination";
 import DataTableHeadCell from "views/dashboard/components/DataTable/DataTableHeadCell";
 import DataTableBodyCell from "views/dashboard/components/DataTable/DataTableBodyCell";
 
+import EditTransaction from "views/dashboard/components/EditTransaction";
+
 const DataTable = ({
   entriesPerPage,
   canSearch,
@@ -22,6 +24,8 @@ const DataTable = ({
   pagination,
   isSorted,
   noEndBorder,
+  refresh,
+  setRefresh,
   isUpdate,
 }) => {
   const defaultValue = entriesPerPage.defaultValue || 10;
@@ -170,7 +174,11 @@ const DataTable = ({
                     align={cell.column.align || "left"}
                     {...cell.getCellProps()}
                   >
-                    {cell.render("Cell")}
+                    {cell.column.Header === "action" ? (
+                      <EditTransaction id={cell.value} refresh={refresh} setRefresh={setRefresh} />
+                    ) : (
+                      cell.render("Cell")
+                    )}
                   </DataTableBodyCell>
                 ))}
               </TableRow>
@@ -262,6 +270,8 @@ DataTable.propTypes = {
   isSorted: PropTypes.bool,
   noEndBorder: PropTypes.bool,
   isUpdate: PropTypes.bool,
+  refresh: PropTypes.number,
+  setRefresh: PropTypes.func,
 };
 
 export default DataTable;

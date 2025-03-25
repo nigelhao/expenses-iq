@@ -79,7 +79,18 @@ def lambda_handler(event, context):
 def route_transactions(event=None, session_data=None):
 
     if event["httpMethod"] == "GET":
-        result = get_transactions(event, email=session_data["email"])
+        if (
+            event.get("queryStringParameters")
+            and "id" in event["queryStringParameters"]
+        ):
+            result = get_transaction(
+                event,
+                email=session_data["email"],
+                transaction_id=event["queryStringParameters"]["id"],
+            )
+        else:
+            result = get_transactions(event, email=session_data["email"])
+
         return {
             "statusCode": result["status"],
             "headers": {
@@ -90,6 +101,24 @@ def route_transactions(event=None, session_data=None):
 
     elif event["httpMethod"] == "POST":
         statusCode = insert_transaction(event, email=session_data["email"])
+        return {
+            "statusCode": statusCode,
+            "headers": {
+                "content-type": "application/json",
+            },
+        }
+
+    elif event["httpMethod"] == "DELETE":
+        statusCode = delete_transaction(event, email=session_data["email"])
+        return {
+            "statusCode": statusCode,
+            "headers": {
+                "content-type": "application/json",
+            },
+        }
+
+    elif event["httpMethod"] == "PUT":
+        statusCode = edit_transaction(event, email=session_data["email"])
         return {
             "statusCode": statusCode,
             "headers": {
@@ -265,6 +294,28 @@ def get_transactions(event=None, dynamodb=None, email=None):
     return {"status": status, "body": {"data": transactions}}
 
 
+def get_transaction(event=None, dynamodb=None, email=None, transaction_id=None):
+    if not dynamodb:
+        dynamodb = boto3.resource("dynamodb")
+
+    transaction = {}
+    try:
+        table = dynamodb.Table("baas-db")
+        response = table.query(
+            KeyConditionExpression=Key("PK").eq("TRANSACTION")
+            & Key("SK").eq(f"{email}_{transaction_id}"),
+        )
+
+        transaction = response["Items"][0]
+        status = 200
+
+    except ClientError as e:
+        print(e)
+        status = 500
+
+    return {"status": status, "body": {"data": transaction}}
+
+
 def insert_transaction(event=None, dynamodb=None, email=None):
     data = json.loads(event["body"])
 
@@ -320,17 +371,18 @@ def format_description_to_json(description):
 
     # The data payload for the request, formatted as JSON
     payload = {
-        "model": "gpt-3.5-turbo",
+        "model": "gpt-4o-mini",
         "temperature": 0,
         "messages": [
             {
                 "role": "system",
-                "content": "You are a translator from a text description to JSON. If there are more than 1 transaction in the description, separate them. Output should only be an array JSON",
+                "content": "You are an financial accountant that can translate text description to JSON. If there are more than 1 transaction in the description, separate them. Output should only be an array JSON",
             },
             {
                 "role": "user",
                 "content": f"""
-                    Given a description generate a name (no more than 5 words) by summarising the description, select a suitable category from the provided set of categories, calculate the correct total amount and extract the currency used. These values must be inserted into the specified JSON format. 
+                    Given a description generate a name (no more than 5 words) by summarising the description, select a suitable category from the provided set of categories, calculate the correct total amount and extract the currency used. 
+                    These values must be inserted into the specified JSON format. 
                     If no currency is stated, set it as SGD. Do not perform any currency conversion.
                     If no value is provided omit the entire json
                     
@@ -384,8 +436,6 @@ def get_cookie(event, cookie_name):
         cookies = event["headers"]["Cookie"]
         cookie_arr = cookies.split(";")
 
-        print(cookies)
-
         for cookie in cookie_arr:
             print(cookie)
             if cookie.split("=")[0] == cookie_name:
@@ -396,3 +446,63 @@ def get_cookie(event, cookie_name):
         return False
     except:
         return False
+
+
+def delete_transaction(event=None, dynamodb=None, email=None):
+    if not dynamodb:
+        dynamodb = boto3.resource("dynamodb")
+
+    try:
+        transaction_id = event["pathParameters"]["api"].split("/")[-1]
+        table = dynamodb.Table("baas-db")
+        table.delete_item(Key={"PK": "TRANSACTION", "SK": f"{email}_{transaction_id}"})
+        return 200
+    except Exception as e:
+        print(e)
+        return 500
+
+
+def edit_transaction(event=None, dynamodb=None, email=None):
+    if not dynamodb:
+        dynamodb = boto3.resource("dynamodb")
+
+    try:
+        transaction_id = event["pathParameters"]["api"].split("/")[-1]
+        data = json.loads(event["body"])
+
+        table = dynamodb.Table("baas-db")
+        # Get existing transaction
+        response = table.get_item(
+            Key={"PK": "TRANSACTION", "SK": f"{email}_{transaction_id}"}
+        )
+
+        if "Item" not in response:
+            return 404
+
+        item = response["Item"]
+
+        # Update fields if provided in request
+        if "date" in data:
+            item["date"] = data["date"]
+        if "simple_description" in data:
+            item["simple_description"] = data["simple_description"]
+        if "category" in data:
+            item["category"] = data["category"]
+        if "original_amount" in data:
+            item["original_amount"] = str(data["original_amount"])
+        if "original_currency" in data:
+            item["original_currency"] = data["original_currency"]
+            # Recalculate SGD amount if currency changed
+            item["sgd_amount"] = str(
+                convert_to_sgd(
+                    float(item["original_amount"]), item["original_currency"]
+                )
+            )
+
+        # Save updated transaction
+        table.put_item(Item=item)
+        return 200
+
+    except Exception as e:
+        print(e)
+        return 500
