@@ -28,13 +28,12 @@ const Description = (props) => {
         withCredentials: true,
       });
 
-      console.log(response);
       setUpdate(false);
       setDescription("");
       props.setRefresh(props.refresh + 1);
     } catch (error) {
-      setUpdate(false);
       console.log(error);
+      setUpdate(false);
       showError();
     }
   };
@@ -83,7 +82,7 @@ const Description = (props) => {
       <SoftBox pb={2} px={2} display="flex" flexDirection={{ xs: "column", sm: "row" }} mt="auto">
         <SoftBox width={{ xs: "100%", sm: "60%" }} lineHeight={1}>
           <SoftTypography variant="button" color="text" fontWeight="regular">
-            Describe your expenses and we will process it
+            Describe your expenses
           </SoftTypography>
         </SoftBox>
         <SoftBox width={{ xs: "100%", sm: "40%" }} textAlign="right" mt={{ xs: 2, sm: "auto" }}>

@@ -30,6 +30,36 @@ def lambda_handler(event, context):
 
         return route_transactions(event, session_data)
 
+    elif api == "budget" and event["httpMethod"] == "GET":
+        if not session_valid:
+            return {
+                "statusCode": 403,
+            }
+
+        result = get_budget(event, email=session_data["email"])
+
+        return {
+            "statusCode": result["status"],
+            "headers": {
+                "content-type": "application/json",
+            },
+            "body": json.dumps(result["body"]),
+        }
+
+    elif api == "budget" and event["httpMethod"] == "PUT":
+        if not session_valid:
+            return {
+                "statusCode": 403,
+            }
+
+        statusCode = update_budget(event, email=session_data["email"])
+        return {
+            "statusCode": statusCode,
+            "headers": {
+                "content-type": "application/json",
+            },
+        }
+
     elif api == "sign-up" and event["httpMethod"] == "POST":
         if session_valid:
             return {
@@ -118,7 +148,7 @@ def route_transactions(event=None, session_data=None):
         }
 
     elif event["httpMethod"] == "PUT":
-        statusCode = edit_transaction(event, email=session_data["email"])
+        statusCode = update_transaction(event, email=session_data["email"])
         return {
             "statusCode": statusCode,
             "headers": {
@@ -206,6 +236,7 @@ def create_account(event=None, dynamodb=None):
                     "SK": data["email"],
                     "password": sha256(data["password"].encode()).hexdigest(),
                     "name": data["name"],
+                    "budget": "0",
                 }
             )
 
@@ -270,6 +301,27 @@ def account_exist(event=None, dynamodb=None):
 
     except ClientError as e:
         raise Exception("Something went wrong")
+
+
+def get_budget(event=None, dynamodb=None, email=None):
+    if not dynamodb:
+        dynamodb = boto3.resource("dynamodb")
+
+    budget = ""
+    try:
+        table = dynamodb.Table("baas-db")
+        response = table.query(
+            KeyConditionExpression=Key("PK").eq("ACCOUNT") & Key("SK").eq(email),
+        )
+
+        budget = response["Items"][0]["budget"]
+        status = 200
+
+    except ClientError as e:
+        print(e)
+        status = 500
+
+    return {"status": status, "body": {"data": budget}}
 
 
 def get_transactions(event=None, dynamodb=None, email=None):
@@ -462,7 +514,7 @@ def delete_transaction(event=None, dynamodb=None, email=None):
         return 500
 
 
-def edit_transaction(event=None, dynamodb=None, email=None):
+def update_transaction(event=None, dynamodb=None, email=None):
     if not dynamodb:
         dynamodb = boto3.resource("dynamodb")
 
@@ -491,13 +543,42 @@ def edit_transaction(event=None, dynamodb=None, email=None):
         if "original_amount" in data:
             item["original_amount"] = str(data["original_amount"])
         if "original_currency" in data:
-            item["original_currency"] = data["original_currency"]
+            item["original_currency"] = data["original_currency"].upper()
             # Recalculate SGD amount if currency changed
             item["sgd_amount"] = str(
                 convert_to_sgd(
                     float(item["original_amount"]), item["original_currency"]
                 )
             )
+
+        # Save updated transaction
+        table.put_item(Item=item)
+        return 200
+
+    except Exception as e:
+        print(e)
+        return 500
+
+
+def update_budget(event=None, dynamodb=None, email=None):
+    if not dynamodb:
+        dynamodb = boto3.resource("dynamodb")
+
+    try:
+        data = json.loads(event["body"])
+
+        table = dynamodb.Table("baas-db")
+        # Get existing transaction
+        response = table.get_item(Key={"PK": "ACCOUNT", "SK": email})
+
+        if "Item" not in response:
+            return 404
+
+        item = response["Item"]
+
+        # Update fields if provided in request
+        if "budget" in data:
+            item["budget"] = str(data["budget"])
 
         # Save updated transaction
         table.put_item(Item=item)

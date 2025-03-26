@@ -7,16 +7,22 @@ import MiniStatisticsCard from "views/dashboard/components/MiniStatisticsCard";
 import Description from "views/dashboard/components/Description";
 import DataTable from "views/dashboard/components/DataTable";
 import VerticalBarChart from "views/dashboard/components/VerticalBarChart";
+import ComplexStatisticsCard from "views/dashboard/components/ComplexStatisticsCard";
+import EditBudget from "./components/EditBudget";
 import data from "config.json";
 
 const Home = () => {
   const [refresh, setRefresh] = useState(0);
   const [isUpdate, setUpdate] = useState(true);
 
+  const [openEditBudget, setOpenEditBudget] = useState(false);
+
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [monthlyExpenses, setMonthlyExpenses] = useState(0);
   const [averageDaily, setAverageDaily] = useState(0);
+  const [currentMonthAverage, setCurrentMonthAverage] = useState(0);
   const [numOfDays, setNumOfDays] = useState(0);
+  const [budget, setBudget] = useState(0);
 
   const todayMonth = new Date().toISOString().substring(0, 7);
 
@@ -50,6 +56,23 @@ const Home = () => {
   });
 
   useEffect(() => {
+    const fetchBudget = async () => {
+      try {
+        const response = await axios({
+          method: "get",
+          url: data.apiRootUrl + "budget",
+          withCredentials: true,
+        });
+        console.log(response);
+        const budget = parseFloat(response.data.data).toFixed(2);
+        setBudget(budget);
+      } catch (err) {
+        console.log(err);
+        if (err.response.status === 401) {
+          window.location.href = "/sign-in";
+        }
+      }
+    };
     const fetchTransactions = async () => {
       try {
         setUpdate(true);
@@ -90,10 +113,20 @@ const Home = () => {
           return expenses;
         }, {});
 
+        // Calculate days passed in current month
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth();
+        const daysInCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const daysPassed = Math.min(today.getDate(), daysInCurrentMonth);
+
+        const monthlyExpense = tmpExpensesByMonth[todayMonth] || 0;
+        const monthlyAverage = daysPassed > 0 ? monthlyExpense / daysPassed : 0;
+
         setAverageDaily(tmpTotalExpenses / diffInDays);
         setNumOfDays(diffInDays);
         setTotalExpenses(tmpTotalExpenses);
-        setMonthlyExpenses(tmpExpensesByMonth[todayMonth] || 0);
+        setMonthlyExpenses(monthlyExpense);
+        setCurrentMonthAverage(monthlyAverage);
         setTableData({ columns: tableData.columns, rows: newTransactions });
         setChartData({
           labels: getLastSixMonths(),
@@ -114,7 +147,7 @@ const Home = () => {
         setUpdate(false);
       }
     };
-
+    fetchBudget();
     fetchTransactions();
   }, [refresh]);
 
@@ -128,11 +161,7 @@ const Home = () => {
           <Grid item xs={12} md={6}>
             <Grid container spacing={3}>
               <Grid item xs={12} md={12}>
-                <VerticalBarChart
-                  title="6 months spending trend"
-                  chart={chartData}
-                  height="13rem"
-                />
+                <VerticalBarChart title="Spending trend" chart={chartData} height="13rem" />
               </Grid>
             </Grid>
           </Grid>
@@ -140,11 +169,54 @@ const Home = () => {
       </SoftBox>
       <SoftBox mb={3}>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={12}>
             <MiniStatisticsCard
               bgColor="primary"
               title={{ text: "Current Month Expenses ", fontWeight: "regular" }}
               count={monthlyExpenses.toFixed(2) + " SGD"}
+              isUpdate={isUpdate}
+            />
+          </Grid>
+          <Grid item xs={12} md={12}>
+            <ComplexStatisticsCard
+              bgColor="dark"
+              count={{
+                number: `${((monthlyExpenses / budget) * 100).toFixed(2)}%`,
+                label: "Budget Utilisation",
+              }}
+              percentage={
+                monthlyExpenses > budget
+                  ? "exceed " + (monthlyExpenses - budget).toFixed(2) + " SGD"
+                  : "available " + (budget - monthlyExpenses).toFixed(2) + " SGD"
+              }
+              // percentage={`exceed by ${(monthlyExpenses - budget).toFixed(2)} SGD`}
+              isUpdate={isUpdate}
+              dropdown={{
+                action: () => setOpenEditBudget(true),
+              }}
+            />
+          </Grid>
+        </Grid>
+      </SoftBox>
+      <SoftBox mb={3}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={4}>
+            <MiniStatisticsCard
+              bgColor="info"
+              title={{
+                text: "Current Month Average",
+                fontWeight: "regular",
+              }}
+              count={currentMonthAverage.toFixed(2) + " SGD"}
+              isUpdate={isUpdate}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <MiniStatisticsCard
+              bgColor="warning"
+              title={{ text: "Average Daily (" + numOfDays + " days)", fontWeight: "regular" }}
+              count={averageDaily.toFixed(2) + " SGD"}
               isUpdate={isUpdate}
             />
           </Grid>
@@ -153,14 +225,6 @@ const Home = () => {
               bgColor="error"
               title={{ text: "Total Expenses (" + numOfDays + " days)", fontWeight: "regular" }}
               count={totalExpenses.toFixed(2) + " SGD"}
-              isUpdate={isUpdate}
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <MiniStatisticsCard
-              bgColor="warning"
-              title={{ text: "Average Daily (" + numOfDays + " days)", fontWeight: "regular" }}
-              count={averageDaily.toFixed(2) + " SGD"}
               isUpdate={isUpdate}
             />
           </Grid>
@@ -175,6 +239,12 @@ const Home = () => {
           setRefresh={setRefresh}
         />
       </SoftBox>
+      <EditBudget
+        openEditBudget={openEditBudget}
+        setOpenEditBudget={setOpenEditBudget}
+        refresh={refresh}
+        setRefresh={setRefresh}
+      />
     </DashboardLayout>
   );
 };
