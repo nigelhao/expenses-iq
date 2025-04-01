@@ -10,31 +10,35 @@ import VerticalBarChart from "views/dashboard/components/VerticalBarChart";
 import ComplexStatisticsCard from "views/dashboard/components/ComplexStatisticsCard";
 import EditBudget from "./components/EditBudget";
 import data from "config.json";
+import { DateTime } from "luxon";
+import DashboardNavbar from "layouts/DashboardNavbar";
 
 const Home = () => {
   const [refresh, setRefresh] = useState(0);
   const [isUpdate, setUpdate] = useState(true);
-
   const [openEditBudget, setOpenEditBudget] = useState(false);
 
-  const [totalExpenses, setTotalExpenses] = useState(0);
-  const [monthlyExpenses, setMonthlyExpenses] = useState(0);
-  const [averageDaily, setAverageDaily] = useState(0);
-  const [currentMonthAverage, setCurrentMonthAverage] = useState(0);
-  const [numOfDays, setNumOfDays] = useState(0);
   const [budget, setBudget] = useState(0);
+  const [currentMonthExpenses, setCurrentMonthExpenses] = useState(0);
+  const [currentMonthAverage, setCurrentMonthAverage] = useState(0);
 
-  const todayMonth = new Date().toISOString().substring(0, 7);
+  const [timezone, setTimeZone] = useState("Asia/Singapore");
+  const todayMonth = DateTime.now().setZone(timezone).toFormat("yyyy-MM");
 
   const [tableData, setTableData] = useState({
     columns: [
-      { Header: "transaction date", accessor: "date" },
+      { Header: "date", accessor: "date" },
       { Header: "description", accessor: "description", width: "30%" },
       { Header: "category", accessor: "category", width: "30%" },
       { Header: "amount (SGD)", accessor: "amount" },
       { Header: "action", accessor: "id" },
     ],
     rows: [],
+  });
+
+  const [chartData, setChartData] = useState({
+    labels: [],
+    datasets: [],
   });
 
   const getLastSixMonths = () => {
@@ -50,11 +54,6 @@ const Home = () => {
     return result;
   };
 
-  const [chartData, setChartData] = useState({
-    labels: getLastSixMonths(),
-    datasets: [],
-  });
-
   useEffect(() => {
     const fetchBudget = async () => {
       try {
@@ -63,7 +62,6 @@ const Home = () => {
           url: data.apiRootUrl + "budget",
           withCredentials: true,
         });
-        console.log(response);
         const budget = parseFloat(response.data.data).toFixed(2);
         setBudget(budget);
       } catch (err) {
@@ -73,6 +71,7 @@ const Home = () => {
         }
       }
     };
+
     const fetchTransactions = async () => {
       try {
         setUpdate(true);
@@ -99,14 +98,7 @@ const Home = () => {
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const givenDate = new Date(newTransactions[newTransactions.length - 1].full_date);
-        const diffInMilliseconds = today - givenDate;
-        const diffInDays = Math.ceil(diffInMilliseconds / (1000 * 60 * 60 * 24) + 1);
 
-        const tmpTotalExpenses = newTransactions.reduce(
-          (total, t) => total + parseFloat(t.amount),
-          0
-        );
         const tmpExpensesByMonth = newTransactions.reduce((expenses, t) => {
           const yearMonth = t.date.substring(0, 7);
           expenses[yearMonth] = (expenses[yearMonth] || 0) + parseFloat(t.amount);
@@ -119,15 +111,15 @@ const Home = () => {
         const daysInCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
         const daysPassed = Math.min(today.getDate(), daysInCurrentMonth);
 
+        console.log(todayMonth);
+
         const monthlyExpense = tmpExpensesByMonth[todayMonth] || 0;
         const monthlyAverage = daysPassed > 0 ? monthlyExpense / daysPassed : 0;
 
-        setAverageDaily(tmpTotalExpenses / diffInDays);
-        setNumOfDays(diffInDays);
-        setTotalExpenses(tmpTotalExpenses);
-        setMonthlyExpenses(monthlyExpense);
+        setCurrentMonthExpenses(monthlyExpense);
         setCurrentMonthAverage(monthlyAverage);
         setTableData({ columns: tableData.columns, rows: newTransactions });
+
         setChartData({
           labels: getLastSixMonths(),
           datasets: [
@@ -153,6 +145,7 @@ const Home = () => {
 
   return (
     <DashboardLayout>
+      <DashboardNavbar />
       <SoftBox py={3}>
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
@@ -169,38 +162,15 @@ const Home = () => {
       </SoftBox>
       <SoftBox mb={3}>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={12}>
+          <Grid item xs={12} md={6}>
             <MiniStatisticsCard
               bgColor="primary"
               title={{ text: "Current Month Expenses ", fontWeight: "regular" }}
-              count={monthlyExpenses.toFixed(2) + " SGD"}
+              count={currentMonthExpenses.toFixed(2) + " SGD"}
               isUpdate={isUpdate}
             />
           </Grid>
-          <Grid item xs={12} md={12}>
-            <ComplexStatisticsCard
-              bgColor="dark"
-              count={{
-                number: `${((monthlyExpenses / budget) * 100).toFixed(2)}%`,
-                label: "Budget Utilisation",
-              }}
-              percentage={
-                monthlyExpenses > budget
-                  ? "exceed " + (monthlyExpenses - budget).toFixed(2) + " SGD"
-                  : "available " + (budget - monthlyExpenses).toFixed(2) + " SGD"
-              }
-              // percentage={`exceed by ${(monthlyExpenses - budget).toFixed(2)} SGD`}
-              isUpdate={isUpdate}
-              dropdown={{
-                action: () => setOpenEditBudget(true),
-              }}
-            />
-          </Grid>
-        </Grid>
-      </SoftBox>
-      <SoftBox mb={3}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={6}>
             <MiniStatisticsCard
               bgColor="info"
               title={{
@@ -211,21 +181,22 @@ const Home = () => {
               isUpdate={isUpdate}
             />
           </Grid>
-
-          <Grid item xs={12} md={4}>
-            <MiniStatisticsCard
-              bgColor="warning"
-              title={{ text: "Average Daily (" + numOfDays + " days)", fontWeight: "regular" }}
-              count={averageDaily.toFixed(2) + " SGD"}
+          <Grid item xs={12} md={12}>
+            <ComplexStatisticsCard
+              bgColor="dark"
+              count={{
+                number: `${((currentMonthExpenses / budget) * 100).toFixed(2)}%`,
+                label: "Budget Utilisation",
+              }}
+              percentage={
+                currentMonthExpenses > budget
+                  ? "exceed " + (currentMonthExpenses - budget).toFixed(2) + " SGD"
+                  : "available " + (budget - currentMonthExpenses).toFixed(2) + " SGD"
+              }
               isUpdate={isUpdate}
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <MiniStatisticsCard
-              bgColor="error"
-              title={{ text: "Total Expenses (" + numOfDays + " days)", fontWeight: "regular" }}
-              count={totalExpenses.toFixed(2) + " SGD"}
-              isUpdate={isUpdate}
+              dropdown={{
+                action: () => setOpenEditBudget(true),
+              }}
             />
           </Grid>
         </Grid>

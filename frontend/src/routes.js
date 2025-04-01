@@ -21,6 +21,7 @@
 */
 
 import Home from "views/dashboard";
+import Statistics from "views/statistics";
 import SignUp from "views/sign-up";
 import SignIn from "views/sign-in";
 import SpaceShip from "assets/icons/SpaceShip";
@@ -34,6 +35,15 @@ const routes = [
     route: "/dashboard",
     component: <Home />,
     icon: <SpaceShip size="12px" />,
+    noCollapse: true,
+  },
+  {
+    type: "collapse",
+    name: "Statistics",
+    key: "statistics",
+    route: "/statistics",
+    component: <Statistics />,
+    icon: <Cube size="12px" />,
     noCollapse: true,
   },
   {

@@ -30,9 +30,8 @@ import typography from "assets/theme/base/typography";
 
 // Images
 import whiteCurved from "assets/images/curved-images/white-curved.jpeg";
-import MoonLoader from "react-spinners/MoonLoader";
 
-function ComplexStatisticsCard({ color = "dark", count, percentage, dropdown = false, isUpdate }) {
+function ComplexStatisticsCard({ color = "dark", count, percentage, dropdown = false }) {
   const { size } = typography;
 
   return (
@@ -62,11 +61,7 @@ function ComplexStatisticsCard({ color = "dark", count, percentage, dropdown = f
                 {count.label}
               </SoftTypography>
               <SoftTypography variant="h5" fontWeight="bold" color="white">
-                {!isUpdate ? (
-                  count.number
-                ) : (
-                  <MoonLoader color="#FFFF" size={15} speedMultiplier={0.8} />
-                )}
+                {count.number}
               </SoftTypography>
             </SoftBox>
           </Grid>
@@ -106,7 +101,6 @@ ComplexStatisticsCard.propTypes = {
       menu: PropTypes.node,
     }),
   ]),
-  isUpdate: PropTypes.bool,
 };
 
 export default ComplexStatisticsCard;

@@ -60,14 +60,6 @@ function SidenavCollapse({ icon, name, children, active, noCollapse, open, ...re
             primary={name}
             sx={(theme) => collapseText(theme, { miniSidenav, transparentSidenav, active })}
           />
-
-          <Icon
-            sx={(theme) =>
-              collapseArrow(theme, { noCollapse, transparentSidenav, miniSidenav, open })
-            }
-          >
-            expand_less
-          </Icon>
         </SoftBox>
       </ListItem>
       {children && (

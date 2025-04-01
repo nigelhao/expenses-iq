@@ -84,6 +84,7 @@ export default function App() {
 
   // Change the openConfigurator state
   const handleLogout = () => {
+    // setMiniSidenav(dispatch, !miniSidenav);
     axios({
       method: "get",
       url: "https://expenseiq.astary.one/api/logout",
