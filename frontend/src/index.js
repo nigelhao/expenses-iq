@@ -19,5 +19,23 @@ root.render(
   </BrowserRouter>
 );
 
-// Register the service worker
-serviceWorker.register();
+// Register the service worker with update notifications
+serviceWorker.register({
+  onUpdate: (registration) => {
+    // When a new version is available, show a notification
+    const updateAvailable = window.confirm(
+      "A new version of the application is available. Load the new version?"
+    );
+
+    if (updateAvailable && registration.waiting) {
+      // Send a message to the waiting service worker to skip waiting
+      registration.waiting.postMessage({ type: "SKIP_WAITING" });
+
+      // Reload the page to activate the new service worker
+      window.location.reload();
+    }
+  },
+  onSuccess: (registration) => {
+    console.log("Service worker registered successfully");
+  },
+});
